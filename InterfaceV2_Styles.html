@@ -258,6 +258,37 @@
       display: inline-flex;
     }
 
+    /* Tooltip de badge (libellé complet au survol) — restauré.
+       Sans ce style, le texte du tooltip s'affichait EN LIGNE dans le badge
+       (ex: "ESP" + "Espagnol LV2" => "ESPESPAGNOL LV2"). */
+    .badge-tooltip {
+      position: absolute;
+      bottom: calc(100% + 6px);
+      left: 50%;
+      transform: translateX(-50%);
+      background: #1f2937;
+      color: #fff;
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      line-height: 1.2;
+      white-space: nowrap;
+      text-transform: none;     /* ne pas hériter de l'uppercase des badges */
+      letter-spacing: normal;
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      z-index: 10000;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, .25);
+      transition: opacity .15s ease;
+    }
+    .all-badges span:hover > .badge-tooltip,
+    [class*="badge"]:hover > .badge-tooltip {
+      opacity: 1;
+      visibility: visible;
+    }
+
     /* Mode plein écran */
     body.fullscreen-mode {
       overflow: hidden;

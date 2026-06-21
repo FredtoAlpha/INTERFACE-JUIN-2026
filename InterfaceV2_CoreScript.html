@@ -892,10 +892,8 @@
         const simpleLine = card.querySelector('.simple-line');
         const nameEl = card.querySelector('.student-simple-name');
 
-        // Gender badge using createBadge()
-        if (document.body.classList.contains('gender-badges')) {
-          simpleLine.insertBefore(createBadge('gender', eleve.sexe), nameEl);
-        }
+        // Gender badge — toujours inséré ; l'affichage est géré par CSS (body.gender-badges)
+        simpleLine.insertBefore(createBadge('gender', eleve.sexe), nameEl);
 
         // Nom complet simplifié
         let nomComplet = simplifierNomComplet(eleve.nom, eleve.prenom);
@@ -944,10 +942,8 @@
         const nomComplet = simplifierNomComplet(eleve.nom, eleve.prenom);
         fullNameElement.textContent = nomComplet;
 
-        // Gender badge using createBadge()
-        if (document.body.classList.contains('gender-badges')) {
-          fullNameElement.parentNode.insertBefore(createBadge('gender', eleve.sexe), fullNameElement);
-        }
+        // Gender badge — toujours inséré ; affichage géré par CSS (body.gender-badges)
+        fullNameElement.parentNode.insertBefore(createBadge('gender', eleve.sexe), fullNameElement);
 
         // NOM EN ROUGE si score COM = 1
         if (eleve.scores && eleve.scores.COM && parseInt(eleve.scores.COM) === 1) {
@@ -1004,10 +1000,8 @@
         const fullNameElement = card.querySelector('.student-fullname');
         const nomComplet = simplifierNomComplet(eleve.nom, eleve.prenom);
 
-        // Gender badge using createBadge()
-        if (document.body.classList.contains('gender-badges')) {
-          fullNameElement.parentNode.insertBefore(createBadge('gender', eleve.sexe), fullNameElement);
-        }
+        // Gender badge — toujours inséré ; affichage géré par CSS (body.gender-badges)
+        fullNameElement.parentNode.insertBefore(createBadge('gender', eleve.sexe), fullNameElement);
 
         fullNameElement.textContent = nomComplet;
         fullNameElement.className = 'student-fullname'; // Reset class in case it was modified
@@ -5206,7 +5200,8 @@
 
     // Gender badges toggle
     if (showGenderBadges) {
-      const genderBadgesEnabled = localStorage.getItem('showGenderBadges') === 'true';
+      // Activé par défaut (sauf si l'utilisateur l'a explicitement désactivé)
+      const genderBadgesEnabled = localStorage.getItem('showGenderBadges') !== 'false';
       showGenderBadges.checked = genderBadgesEnabled;
       if (genderBadgesEnabled) {
         document.body.classList.add('gender-badges');

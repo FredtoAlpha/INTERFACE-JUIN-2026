@@ -66,7 +66,7 @@ function genererJeuDeDonneesDemo(nbEleves) {
 
     const lv2Pool = ['ESP', 'ESP', 'ESP', 'ALL', 'ALL', 'ITA'];          // pondéré
     const optPool = ['', '', '', '', '', 'LATIN', 'LATIN', 'CHANT', 'GREC'];
-    const dispoPool = ['', '', '', '', '', '', '', '', 'PAP', 'PPRE'];
+    const dispoPool = ['', '', '', '', '', '', '', '', '', '', '', '', '', '', 'PAP', 'PPRE'];
     const mobPool = ['LIBRE', 'LIBRE', 'LIBRE', 'LIBRE', 'LIBRE', 'LIBRE', 'LIBRE', 'FIXE', 'FIXE', 'PERMUT'];
 
     const byClass = {};
@@ -89,12 +89,12 @@ function genererJeuDeDonneesDemo(nbEleves) {
 
     // Démonstration des contraintes ASSO / DISSO (colonnes 13 et 14, index 12/13)
     if (byClass['5°1'].length >= 2) {
-      byClass['5°1'][0][12] = 'AMIS1';   // ASSO : ces deux élèves doivent rester ensemble
-      byClass['5°1'][1][12] = 'AMIS1';
+      byClass['5°1'][0][12] = 'A1';   // ASSO : ces deux élèves doivent rester ensemble
+      byClass['5°1'][1][12] = 'A1';
     }
     if (byClass['5°2'].length >= 2) {
-      byClass['5°2'][0][13] = 'SEP1';     // DISSO : ces deux élèves ne doivent pas être ensemble
-      byClass['5°2'][1][13] = 'SEP1';
+      byClass['5°2'][0][13] = 'D1';     // DISSO : ces deux élèves ne doivent pas être ensemble
+      byClass['5°2'][1][13] = 'D1';
     }
 
     // Écriture des onglets de classe (remplace s'ils existent)
