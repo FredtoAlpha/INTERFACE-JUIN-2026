@@ -5468,7 +5468,26 @@
         const mode = e.currentTarget.dataset.mode;
 
         if (mode === 'SOURCES') {
-          alert('Base Pronote non implémentée. Cette fonctionnalité sera disponible prochainement.');
+          // 🌉 Base Pronote : prépare les onglets de travail "<classe> TEST" depuis
+          // l'import (l'import reste intact), puis charge en mode TEST.
+          modal.classList.add('hidden');
+          if (typeof showSpinner === 'function') showSpinner();
+          try {
+            const prep = await gsRun('preparerBasePronote');
+            if (!prep || !prep.success) {
+              if (typeof hideSpinner === 'function') hideSpinner();
+              alert('⚠️ ' + ((prep && prep.error) || 'Préparation impossible.'));
+              openStartupModal({ force: true });
+              return;
+            }
+            localStorage.setItem('mode-selection', 'TEST');
+            initRepartitionApp();
+          } catch (err) {
+            if (typeof hideSpinner === 'function') hideSpinner();
+            console.error('Erreur préparation Base Pronote:', err);
+            alert('Erreur lors de la préparation : ' + err.message);
+            openStartupModal({ force: true });
+          }
           return;
         }
 
