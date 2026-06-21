@@ -170,6 +170,7 @@ function onOpen() {
   SpreadsheetApp.getUi()
     .createMenu('🏫 Répartition')
     .addItem('📋 Créer l\'onglet modèle (CSV Pronote)', 'creerMatriceModele')
+    .addItem('🎲 Générer un jeu de démo (150 élèves)', 'genererJeuDeDonneesDemoUI')
     .addSeparator()
     .addItem('📥 Importer depuis Pronote', 'ouvrirImportAssistant')
     .addItem('⚙️ Configurer les classes (capacités / options)', 'ouvrirConfigurationStructure')
