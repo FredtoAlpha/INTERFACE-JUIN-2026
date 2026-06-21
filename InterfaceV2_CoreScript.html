@@ -2972,12 +2972,10 @@
           });
         }
 
-        // Appliquer l'affichage/masquage des scores
+        // Appliquer l'affichage/masquage des scores via une classe sur <body>
+        // (robuste : survit aux re-rendus de cartes, contrairement au style inline)
         if (prefs.showScores !== undefined) {
-          const scoresElements = document.querySelectorAll('.scores');
-          scoresElements.forEach(el => {
-            el.style.display = prefs.showScores ? '' : 'none';
-          });
+          document.body.classList.toggle('hide-scores', !prefs.showScores);
         }
       };
 
@@ -4370,6 +4368,13 @@
         </div>
       `;
 
+        // Plugin "data labels" : chiffres affichés directement sur les graphiques.
+        // Enregistré globalement mais DÉSACTIVÉ par défaut (activé par graphique).
+        try {
+          if (window.ChartDataLabels) Chart.register(window.ChartDataLabels);
+          if (Chart.defaults && Chart.defaults.set) Chart.defaults.set('plugins.datalabels', { display: false });
+        } catch (e) { console.warn('datalabels indisponible:', e); }
+
         // Chart 1 : Distribution empilée par classe
         const ctx1 = document.getElementById('chartStacked').getContext('2d');
         chartCommunication = new Chart(ctx1, {
@@ -4410,9 +4415,17 @@
               tooltip: {
                 callbacks: {
                   label: function (context) {
-                    return `Score ${ context.datasetIndex + 1 }: ${ context.parsed.y } `;
+                    return `Score ${context.datasetIndex + 1} : ${context.parsed.y} élève(s)`;
                   }
                 }
+              },
+              datalabels: {
+                display: 'auto',
+                color: '#ffffff',
+                textStrokeColor: 'rgba(0,0,0,0.6)',
+                textStrokeWidth: 3,
+                font: { weight: 'bold', size: 11 },
+                formatter: function (v) { return v > 0 ? v : ''; }
               }
             }
           }
@@ -4449,6 +4462,15 @@
                   boxWidth: 10,
                   font: { size: 10 }
                 }
+              },
+              datalabels: {
+                display: true,
+                anchor: 'end',
+                align: 'end',
+                offset: -1,
+                color: '#374151',
+                font: { weight: 'bold', size: 10 },
+                formatter: function (v) { return v ? Number(v).toFixed(1) : ''; }
               }
             }
           }
@@ -4474,6 +4496,30 @@
                 labels: {
                   boxWidth: 10,
                   font: { size: 10 }
+                }
+              },
+              tooltip: {
+                callbacks: {
+                  label: function (ctx) {
+                    var d = ctx.chart.data.datasets[0].data;
+                    var total = d.reduce(function (a, b) { return a + (Number(b) || 0); }, 0);
+                    var v = Number(ctx.parsed) || 0;
+                    var pct = total ? Math.round(v / total * 100) : 0;
+                    return ' ' + ctx.label + ' : ' + v + ' (' + pct + '%)';
+                  }
+                }
+              },
+              datalabels: {
+                display: true,
+                color: '#ffffff',
+                textStrokeColor: 'rgba(0,0,0,0.45)',
+                textStrokeWidth: 2,
+                font: { weight: 'bold', size: 12 },
+                formatter: function (v, ctx) {
+                  var d = ctx.chart.data.datasets[0].data;
+                  var total = d.reduce(function (a, b) { return a + (Number(b) || 0); }, 0);
+                  if (!total || !v) return '';
+                  return Math.round(v / total * 100) + '%';
                 }
               }
             }
@@ -4504,7 +4550,16 @@
               y: { ticks: { font: { size: 10 } } }
             },
             plugins: {
-              legend: { display: false }
+              legend: { display: false },
+              datalabels: {
+                display: true,
+                anchor: 'end',
+                align: 'right',
+                clamp: true,
+                color: '#374151',
+                font: { weight: 'bold', size: 11 },
+                formatter: function (v) { return v || ''; }
+              }
             }
           }
         });
@@ -4561,7 +4616,8 @@
 
         // Mettre à jour les boutons
         ['COM', 'TRA', 'PART', 'ABS'].forEach(t => {
-          const btn = document.getElementById(`btn${ t } `);
+          const btn = document.getElementById('btn' + t);
+          if (!btn) return;
           if (t === type) {
             btn.classList.remove('bg-gray-300');
             btn.classList.add('bg-green-500', 'text-white');
@@ -4578,7 +4634,8 @@
           'PART': 'Participation',
           'ABS': 'Absentéisme'
         };
-        document.getElementById('scoreType').textContent = titles[type];
+        const scoreTypeEl = document.getElementById('scoreType');
+        if (scoreTypeEl) scoreTypeEl.textContent = titles[type] || type;
 
         // Mettre à jour les graphiques
         updateCharts(type);
