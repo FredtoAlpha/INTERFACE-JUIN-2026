@@ -943,6 +943,10 @@
       background: #FF0000; /* Rouge */
     }
 
+    /* Masquage robuste des scores (case "Jauges Visuelles (Scores)") — via classe
+       body, insensible aux re-rendus de cartes (contrairement à un style inline). */
+    body.hide-scores .scores { display: none !important; }
+
     /* ---------------------------  CARTES FLUIDES 3 LIGNES  --------------------------- */
     /* 3 tailles de carte selon la largeur disponible */
     .card-sm { 

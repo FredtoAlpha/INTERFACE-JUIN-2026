@@ -2972,12 +2972,10 @@
           });
         }
 
-        // Appliquer l'affichage/masquage des scores
+        // Appliquer l'affichage/masquage des scores via une classe sur <body>
+        // (robuste : survit aux re-rendus de cartes, contrairement au style inline)
         if (prefs.showScores !== undefined) {
-          const scoresElements = document.querySelectorAll('.scores');
-          scoresElements.forEach(el => {
-            el.style.display = prefs.showScores ? '' : 'none';
-          });
+          document.body.classList.toggle('hide-scores', !prefs.showScores);
         }
       };
 
