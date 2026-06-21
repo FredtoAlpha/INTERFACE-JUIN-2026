@@ -275,20 +275,15 @@ function validateClassData(sheetName) {
  */
 function saveElevesSnapshot(disposition, mode) {
   try {
-    const ss = SpreadsheetApp.getActiveSpreadsheet();
-    
-    // Sauvegarder chaque classe
-    for (const [className, classData] of Object.entries(disposition)) {
-      const sheet = ss.getSheetByName(className);
-      if (!sheet) continue;
-      
-      const headers = classData.headers || sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
-      const students = classData.students || [];
-      
-      saveStudentsToSheet(className, students, headers);
+    // Écrit vers les onglets de travail selon le mode :
+    //   TEST → "<classe> TEST", FIN → "<classe> FIN", sinon → "<classe> CACHE".
+    // L'onglet source importé ("5°1") n'est JAMAIS écrasé.
+    const suffix = bp_suffixForMode_(mode);
+    const result = bp_writeDisposition_(disposition, suffix);
+    if (result && result.success) {
+      result.message = 'Snapshot sauvegardé avec succès';
     }
-    
-    return { success: true, message: 'Snapshot sauvegardé avec succès' };
+    return result;
   } catch (e) {
     return { success: false, error: e.toString() };
   }

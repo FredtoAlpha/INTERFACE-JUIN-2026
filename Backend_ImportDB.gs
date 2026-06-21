@@ -1588,6 +1588,25 @@ function calcScoreTRA_import_(moyennes) {
   return attribuerScoreParSeuil_(moy, cfg.seuils.TRA);
 }
 
+/**
+ * Attribue un score 1..5 par seuils (rapatrié de Backend_Scores.gs, supprimé).
+ * @param {number} valeur - Valeur à scorer
+ * @param {Array} seuils - [{min,max,score}, …] triés du meilleur au moins bon
+ * @returns {number|null}
+ */
+function attribuerScoreParSeuil_(valeur, seuils) {
+  if (valeur === null || valeur === undefined || isNaN(valeur)) return null;
+  for (var i = 0; i < seuils.length; i++) {
+    if (valeur >= seuils[i].min && valeur <= seuils[i].max) {
+      return seuils[i].score;
+    }
+  }
+  // Fallback : hors plage → extrême le plus proche
+  if (valeur < seuils[seuils.length - 1].min) return seuils[seuils.length - 1].score;
+  if (valeur > seuils[0].max) return seuils[0].score;
+  return 1;
+}
+
 function calcScorePART_import_(oraux) {
   if (!oraux || Object.keys(oraux).length === 0) return null;
   var cfg = getImportScoringCfg_();

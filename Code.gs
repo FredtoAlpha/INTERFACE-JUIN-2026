@@ -168,23 +168,24 @@ function safeSetUserProperty(key, value) {
  */
 function onOpen() {
   SpreadsheetApp.getUi()
-    .createMenu('🚀 Console Admin')
-    .addItem('📊 Ouvrir la Console Admin', 'ouvrirConsolePilotageV3')
+    .createMenu('🏫 Répartition')
+    .addItem('📋 Créer l\'onglet modèle (CSV Pronote)', 'creerMatriceModele')
+    .addItem('🎲 Générer un jeu de démo (150 élèves)', 'genererJeuDeDonneesDemoUI')
     .addSeparator()
-    .addSubMenu(SpreadsheetApp.getUi().createMenu('🛠️ Outils Spécifiques')
-        .addItem('➕ Intégrer un Nouvel Élève', 'ouvrirModuleNouvelEleve')
-        .addItem('👥 Créer des Groupes', 'ouvrirModuleGroupes')
-        .addItem('📊 Scores Élèves (Pronote)', 'ouvrirScoresEleves'))
+    .addItem('📥 Importer depuis Pronote', 'ouvrirImportAssistant')
+    .addItem('⚙️ Configurer les classes (capacités / options)', 'ouvrirConfigurationStructure')
     .addSeparator()
-    .addSubMenu(SpreadsheetApp.getUi().createMenu('🔍 Diagnostic ASSO/DISSO')
-        .addItem('📋 Analyser les colonnes', 'diagnosticAssoDisso')
-        .addItem('🔄 Inverser ASSO ↔ DISSO', 'inverserAssoDisso'))
+    .addItem('🎯 Ouvrir l\'interface de répartition', 'ouvrirInterfaceRepartition')
+    .addItem('➕ Intégrer un nouvel élève', 'ouvrirModuleNouvelEleve')
     .addSeparator()
-    .addItem('⚙️ Configuration Avancée', 'ouvrirConfigurationStructure')
+    .addItem('🔁 Réinitialiser la base depuis l\'import', 'reinitialiserBasePronoteUI')
     .addItem('🔓 Déverrouiller _STRUCTURE', 'deverrouillerStructure')
     .addToUi();
 
-  console.log('✅ Menu V3 Ultimate chargé');
+  // Best-effort : crée la matrice modèle si le classeur est encore vierge.
+  ensureMatriceModele_();
+
+  console.log('✅ Menu Répartition (version simplifiée) chargé');
 }
 
 // ==================== ACCÈS WEB (Interface Profs) ====================
@@ -220,18 +221,18 @@ function include(filename) {
 
 // ==================== LANCEURS MODALES ====================
 
-// ouvrirConsolePilotageV3() → supprimée (définition canonique dans ConsolePilotageV3_Server.js avec showModelessDialog)
-// ouvrirConfigurationStructure() → supprimée (définition canonique dans Structure.js)
-// ouvrirConfigurationComplete() → supprimée (définition canonique dans ConsolePilotageV3_Server.js)
-
 /**
- * Ouvre le module de création de groupes V4
- * Permet de créer des groupes d'élèves selon différents critères
+ * Ouvre l'interface de répartition (InterfaceV2) dans une grande fenêtre modale.
+ * C'est le cœur de l'outil : déplacements sous conditions, graphiques,
+ * sauvegardes automatiques et création d'onglets.
  */
-function ouvrirModuleGroupes() {
-  const html = HtmlService.createHtmlOutputFromFile('GroupsInterfaceV4')
-    .setWidth(1400).setHeight(800);
-  SpreadsheetApp.getUi().showModalDialog(html, 'Module Groupes');
+function ouvrirInterfaceRepartition() {
+  const html = HtmlService.createTemplateFromFile('InterfaceV2')
+    .evaluate()
+    .setWidth(1600)
+    .setHeight(900)
+    .setTitle('Interface de répartition');
+  SpreadsheetApp.getUi().showModalDialog(html, '🎯 Interface de répartition');
 }
 
 /**
@@ -245,17 +246,25 @@ function ouvrirModuleNouvelEleve() {
 }
 
 /**
- * Ouvre SCORE CONSOLE directement sur la phase Scores Élèves
- * Raccourci pour accéder au module de calcul des scores Pronote
+ * Réinitialise la base de travail depuis l'import (avec confirmation).
+ * Recrée les onglets "<classe> TEST" à partir des onglets importés.
  */
-function ouvrirScoresEleves() {
-  var html = HtmlService.createHtmlOutputFromFile('ConsolePilotageV3')
-    .setWidth(1600)
-    .setHeight(900)
-    .setTitle('Scores Élèves - Console Admin');
-  SpreadsheetApp.getUi().showModelessDialog(html, 'Scores Élèves');
-  // Note : la console s'ouvre sur phase 1 par défaut.
-  // L'utilisateur navigue vers SCORES via la sidebar.
+function reinitialiserBasePronoteUI() {
+  const ui = SpreadsheetApp.getUi();
+  const resp = ui.alert(
+    'Réinitialiser depuis l\'import',
+    'Recréer les onglets de travail "… TEST" à partir des onglets importés ?\n\n' +
+    '⚠️ Les modifications manuelles en cours dans les onglets TEST seront écrasées.\n' +
+    '(Les onglets importés d\'origine ne sont pas touchés.)',
+    ui.ButtonSet.OK_CANCEL);
+  if (resp !== ui.Button.OK) return;
+
+  const result = reinitialiserBasePronote();
+  if (result && result.success) {
+    ui.alert('✅ Base réinitialisée : ' + result.count + ' classe(s) prête(s).');
+  } else {
+    ui.alert('❌ ' + ((result && result.error) || 'Échec de la réinitialisation.'));
+  }
 }
 
 // ==================== UTILITAIRES ADMIN & COMPATIBILITÉ ====================
@@ -274,19 +283,6 @@ function deverrouillerStructure() {
   } else {
     SpreadsheetApp.getUi().alert('⚠️ Onglet _STRUCTURE introuvable.');
   }
-}
-
-/**
- * Wrapper pour appeler le pipeline LEGACY PRIME
- * Fonction de compatibilité pour ConsolePilotageV3_Server.gs
- * @returns {Object} Résultat du pipeline
- */
-function legacy_runFullPipeline() {
-  if (typeof legacy_runFullPipeline_PRIME === 'function') {
-    return legacy_runFullPipeline_PRIME();
-  }
-  SpreadsheetApp.getUi().alert("❌ Erreur : Moteur LEGACY introuvable.");
-  return { success: false, error: 'LEGACY_Pipeline.gs not found' };
 }
 
 /**
@@ -768,72 +764,15 @@ function saveCacheData(cacheData) {
  */
 function saveDispositionToSheets(disposition) {
   try {
-    // Validation des paramètres
     if (!disposition || typeof disposition !== 'object' || Object.keys(disposition).length === 0) {
       return { success: false, error: 'Paramètre disposition invalide ou vide' };
     }
-
-    const ss = getActiveSpreadsheetCached();
-    let savedCount = 0;
-    let failedCount = 0;
-    const errors = [];
-
-    for (const className in disposition) {
-      try {
-        const classData = disposition[className];
-
-        // Validation des données de classe
-        if (!classData || !classData.headers || !classData.students) {
-          throw new Error(`Données invalides pour la classe ${className}`);
-        }
-
-        // Nom de l'onglet CACHE (ex: "5°1 TEST" -> "5°1 CACHE")
-        const cacheSheetName = className.replace(/(TEST|FIN|PREVIOUS)$/i, 'CACHE');
-
-        // Créer ou obtenir l'onglet CACHE
-        let cacheSheet = ss.getSheetByName(cacheSheetName);
-        if (!cacheSheet) {
-          cacheSheet = ss.insertSheet(cacheSheetName);
-          console.log(`✅ Onglet créé: ${cacheSheetName}`);
-        } else {
-          cacheSheet.clearContents();
-          console.log(`🔄 Onglet vidé: ${cacheSheetName}`);
-        }
-
-        // Écrire les données
-        const allRows = [classData.headers, ...classData.students];
-        if (allRows.length > 0 && classData.headers.length > 0) {
-          cacheSheet.getRange(1, 1, allRows.length, classData.headers.length)
-            .setValues(allRows);
-          savedCount++;
-        }
-      } catch (classError) {
-        failedCount++;
-        const errorMsg = `Erreur pour ${className}: ${classError.message}`;
-        errors.push(errorMsg);
-        console.log(`⚠️ ${errorMsg}`);
-      }
-    }
-
-    SpreadsheetApp.flush();
-
-    console.log(`💾 Sauvegarde terminée: ${savedCount} succès, ${failedCount} échecs`);
-
-    return {
-      success: failedCount === 0,
-      saved: savedCount,
-      failed: failedCount,
-      errors: errors.length > 0 ? errors : undefined,
-      timestamp: new Date().toISOString()
-    };
-
+    // Auto-sauvegarde → onglets "<classe> CACHE" (l'onglet source importé reste intact).
+    // Délègue au writer cohérent (reconstitue les lignes depuis les ID).
+    return bp_writeDisposition_(disposition, 'CACHE');
   } catch (e) {
     console.log(`❌ Erreur critique saveDispositionToSheets: ${e.message}`);
-    return {
-      success: false,
-      error: e.message,
-      details: e.toString()
-    };
+    return { success: false, error: e.message, details: e.toString() };
   }
 }
 

@@ -1,10 +1,38 @@
 /**
- * Ouvre l'interface de configuration de structure
- * Redirige vers l'interface de configuration complète
+ * Configuration légère des classes (version simplifiée).
+ * Garantit l'existence de l'onglet _STRUCTURE (généré depuis les classes
+ * importées si besoin), l'active pour édition directe, et explique les colonnes.
+ * Ces règles pilotent les "déplacements sous conditions" dans l'interface.
  */
 function ouvrirConfigurationStructure() {
-  // Rediriger vers la configuration complète
-  ouvrirConfigurationComplete();
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sheet = ss.getSheetByName('_STRUCTURE');
+
+  if (!sheet) {
+    const sources = (typeof bp_findSourceClassSheets_ === 'function') ? bp_findSourceClassSheets_() : [];
+    if (sources.length && typeof ensureStructureFromClasses_ === 'function') {
+      const sizes = {};
+      sources.forEach(s => { sizes[s.getName()] = Math.max(0, s.getLastRow() - 1); });
+      ensureStructureFromClasses_(sources.map(s => s.getName()), sizes);
+    } else {
+      sheet = ss.insertSheet('_STRUCTURE');
+      sheet.getRange(1, 1, 1, 3).setValues([['CLASSE_DEST', 'EFFECTIF', 'OPTIONS']])
+        .setFontWeight('bold').setBackground('#d9e1f2');
+      sheet.setFrozenRows(1);
+    }
+    sheet = ss.getSheetByName('_STRUCTURE');
+  }
+
+  sheet.activate();
+  SpreadsheetApp.getUi().alert(
+    '⚙️ Configuration des classes',
+    'Modifiez directement l\'onglet _STRUCTURE :\n\n' +
+    '• CLASSE_DEST : nom de la classe (ex : 5°1)\n' +
+    '• EFFECTIF : capacité maximale (ex : 28)\n' +
+    '• OPTIONS : quotas séparés par des virgules, ex : "LATIN=10, CHANT=8"\n' +
+    '  (laisser vide = aucune contrainte d\'option)\n\n' +
+    'Ces règles pilotent les "déplacements sous conditions" dans l\'interface de répartition.',
+    SpreadsheetApp.getUi().ButtonSet.OK);
 }
 
 /**
