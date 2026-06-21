@@ -4618,7 +4618,8 @@
 
         // Mettre à jour les boutons
         ['COM', 'TRA', 'PART', 'ABS'].forEach(t => {
-          const btn = document.getElementById(`btn${ t } `);
+          const btn = document.getElementById('btn' + t);
+          if (!btn) return;
           if (t === type) {
             btn.classList.remove('bg-gray-300');
             btn.classList.add('bg-green-500', 'text-white');
@@ -4635,7 +4636,8 @@
           'PART': 'Participation',
           'ABS': 'Absentéisme'
         };
-        document.getElementById('scoreType').textContent = titles[type];
+        const scoreTypeEl = document.getElementById('scoreType');
+        if (scoreTypeEl) scoreTypeEl.textContent = titles[type] || type;
 
         // Mettre à jour les graphiques
         updateCharts(type);
