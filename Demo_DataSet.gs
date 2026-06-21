@@ -66,7 +66,7 @@ function genererJeuDeDonneesDemo(nbEleves) {
 
     const lv2Pool = ['ESP', 'ESP', 'ESP', 'ALL', 'ALL', 'ITA'];          // pondéré
     const optPool = ['', '', '', '', '', 'LATIN', 'LATIN', 'CHANT', 'GREC'];
-    const dispoPool = ['', '', '', '', '', '', '', '', '', '', '', '', '', '', 'PAP', 'PPRE'];
+    const dispoVals = ['PAP', 'PPRE']; // dispositifs assignés rarement (≈6 %)
     const mobPool = ['LIBRE', 'LIBRE', 'LIBRE', 'LIBRE', 'LIBRE', 'LIBRE', 'LIBRE', 'FIXE', 'FIXE', 'PERMUT'];
 
     const byClass = {};
@@ -83,7 +83,7 @@ function genererJeuDeDonneesDemo(nbEleves) {
         id, nom, prenom, nom + ' ' + prenom, sexe,
         demo_pick_(lv2Pool), demo_pick_(optPool),
         demo_score_(), demo_score_(), demo_score_(), demo_score_(),
-        demo_pick_(dispoPool), '', '', demo_pick_(mobPool), classe
+        (Math.random() < 0.06 ? demo_pick_(dispoVals) : ''), '', '', demo_pick_(mobPool), classe
       ]);
     }
 

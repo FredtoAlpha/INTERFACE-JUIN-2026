@@ -1773,8 +1773,8 @@
     // ============================================
     window.SCORE_LEVEL_COLORS = {
       1: '#FF0000',
-      2: '#F6B26B',
-      3: '#FFD966',
+      2: '#FB8C00',
+      3: '#FFD000',
       4: '#93C47D',
       5: '#38761D'
     };
@@ -5111,12 +5111,52 @@
     if (btnSaveWIP) btnSaveWIP.addEventListener('click', async (e) => {
       e.preventDefault();
       e.stopPropagation();
-      lancerSauvegardeAvecProgression('saveCacheData', e.currentTarget, {
-        title: 'Sauvegarde Brouillon (CACHE)...',
-        successMessage: 'Brouillon sauvegardé avec succès !'
-      });
+      await sauvegardeBrouillonManuelle(e.currentTarget);
     });
   }
+
+  /**
+   * Sauvegarde manuelle du brouillon (bouton « Brouillon »).
+   * Écrit dans les onglets CACHE (durable) + localStorage (reprise rapide),
+   * avec un retour clair pour rassurer l'utilisateur.
+   */
+  async function sauvegardeBrouillonManuelle(btn) {
+    const disposition = (typeof exportDisposition === 'function') ? exportDisposition() : null;
+    if (!disposition || Object.keys(disposition).length === 0) {
+      if (typeof toast === 'function') toast('Rien à sauvegarder pour le moment.', 'warning');
+      return;
+    }
+    const labelSpan = btn ? btn.querySelector('span:last-child') : null;
+    const labelInit = labelSpan ? labelSpan.textContent : '';
+    if (btn) { btn.disabled = true; btn.style.opacity = '0.6'; }
+    if (labelSpan) labelSpan.textContent = 'Sauvegarde…';
+    try {
+      try {
+        localStorage.setItem('cache-data', JSON.stringify({
+          date: new Date().toISOString(), disposition, mode: STATE.currentMode
+        }));
+      } catch (_) {}
+      const result = await gsRun('saveDispositionToSheets', disposition);
+      if (result && result.success) {
+        STATE.has_user_action = false;
+        STATE.last_save_ts = Date.now();
+        if (typeof updateSaveBadge === 'function') updateSaveBadge(true);
+        const h = new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+        if (labelSpan) { labelSpan.textContent = '✓ Enregistré'; setTimeout(() => { labelSpan.textContent = labelInit || 'Brouillon'; }, 2500); }
+        if (typeof toast === 'function')
+          toast('💾 Brouillon enregistré à ' + h + ' — vous pourrez reprendre votre travail (carte « Brouillon » au démarrage).', 'success');
+      } else {
+        if (labelSpan) labelSpan.textContent = labelInit || 'Brouillon';
+        if (typeof toast === 'function') toast('⚠️ Sauvegarde incomplète : ' + ((result && result.error) || 'réessayez.'), 'error');
+      }
+    } catch (err) {
+      if (labelSpan) labelSpan.textContent = labelInit || 'Brouillon';
+      if (typeof toast === 'function') toast('❌ Erreur de sauvegarde : ' + err.message, 'error');
+    } finally {
+      if (btn) { btn.disabled = false; btn.style.opacity = ''; }
+    }
+  }
+  window.sauvegardeBrouillonManuelle = sauvegardeBrouillonManuelle;
 
   // 3. VIEW MODE CONTROLS (view selector, gender badges, white background)
   function setupViewModeControls() {

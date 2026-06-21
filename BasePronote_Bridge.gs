@@ -379,6 +379,25 @@ function logLine(level, msg) {
   }
 }
 
+// ==================== FINALISATION ====================
+
+/**
+ * Finalise la répartition : écrit la disposition dans les onglets "<classe> FIN".
+ * Appelé par le bouton « Finaliser » de l'interface.
+ * @param {Object} disposition - Disposition par classe (clés = classes, valeurs = IDs)
+ * @param {string} [mode] - ignoré (on écrit toujours en FIN)
+ * @returns {Object} {success, saved, failed, ...}
+ */
+function finalizeClasses(disposition, mode) {
+  try {
+    const result = bp_writeDisposition_(disposition, 'FIN');
+    if (result && result.success) result.message = 'Répartition finalisée (onglets FIN créés).';
+    return result;
+  } catch (e) {
+    return { success: false, error: e.message };
+  }
+}
+
 // ==================== STUBS — FONCTIONNALITÉS RETIRÉES ====================
 // Les modules Optimisation automatique / Analytics / Contraintes ont été retirés
 // (version simplifiée = déplacements MANUELS sous conditions). Leurs boutons
