@@ -165,10 +165,22 @@
         return;
       }
 
-      // exportDisposition() est interne à l'IIFE de CoreScript : on passe par App.Data
-      const disposition = (window.App && window.App.Data && typeof window.App.Data.exportDisposition === 'function')
-        ? window.App.Data.exportDisposition()
-        : {};
+      // exportDisposition() est interne à l'IIFE de CoreScript : on passe par la
+      // version exposée sur window, avec repli sur une lecture directe du DOM.
+      let disposition = {};
+      if (typeof window.exportDisposition === 'function') {
+        try { disposition = window.exportDisposition() || {}; } catch (e) { disposition = {}; }
+      }
+      if (!disposition || !Object.keys(disposition).length) {
+        document.querySelectorAll('.class-column').forEach(function (col) {
+          const nameEl = col.querySelector('.classe-name');
+          if (!nameEl) return;
+          const classe = (nameEl.textContent || '').trim();
+          const ids = Array.from(col.querySelectorAll('.student-card'))
+            .map(function (c) { return c.dataset.id; }).filter(Boolean);
+          if (classe) disposition[classe] = ids;
+        });
+      }
       const cacheData = {
         date: new Date().toISOString(),
         disposition: disposition,

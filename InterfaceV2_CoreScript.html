@@ -2405,6 +2405,9 @@
     function exportDisposition() {
       return App.Data.exportDisposition();
     }
+    // Exposé pour les blocs <script> externes (HeaderControls, PanelsUtils…)
+    // qui n'ont pas accès à la portée interne (App n'est pas global).
+    window.exportDisposition = exportDisposition;
 
     // Wrapper pour saveImmediateCache
     async function saveImmediateCache() {

@@ -109,11 +109,34 @@
   }
   
   /**
+   * Récupère la disposition courante de façon robuste, indépendamment de la
+   * portée interne de CoreScript (App n'est pas global). Essaie la fonction
+   * exposée window.exportDisposition, puis lit directement le DOM en repli.
+   */
+  function getDispositionCourante() {
+    if (typeof window.exportDisposition === 'function') {
+      try {
+        const d = window.exportDisposition();
+        if (d && Object.keys(d).length) return d;
+      } catch (e) { /* repli DOM ci-dessous */ }
+    }
+    const result = {};
+    document.querySelectorAll('.class-column').forEach(function (col) {
+      const nameEl = col.querySelector('.classe-name');
+      if (!nameEl) return;
+      const classe = (nameEl.textContent || '').trim();
+      const ids = Array.from(col.querySelectorAll('.student-card'))
+        .map(function (c) { return c.dataset.id; }).filter(Boolean);
+      if (classe) result[classe] = ids;
+    });
+    return result;
+  }
+
+  /**
    * Exécute la finalisation : écrit les onglets FIN, puis ouvre le document à imprimer.
    */
   function executeFinalizeProcess() {
-    const disposition = (typeof exportDisposition === 'function') ? exportDisposition()
-      : (window.App && window.App.Data ? window.App.Data.exportDisposition() : null);
+    const disposition = getDispositionCourante();
 
     if (!disposition || Object.keys(disposition).length === 0) {
       if (window.showToast) showToast('Aucune classe à finaliser.', 'warning');
@@ -169,7 +192,7 @@
 
       cards.forEach(function (card, i) {
         const id = card.dataset.id;
-        const s = (window.STATE && STATE.students && STATE.students[id]) || {};
+        const s = (window.STATE && window.STATE.students && window.STATE.students[id]) || {};
         const sexe = (s.sexe || '').toUpperCase();
         if (sexe === 'F') f++; else if (sexe === 'M') m++;
         let nom = ((s.nom || '') + ' ' + (s.prenom || '')).trim();
